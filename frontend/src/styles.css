@@ -63,6 +63,12 @@ a {
 }
 
 .sidebar {
+  /* Fija al alto de la pantalla: si se estira con el contenido, "Cerrar sesión"
+     queda al final de páginas largas y el degradado se diluye. */
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
   background: linear-gradient(180deg, #082830 0%, #0b3a45 48%, #0f5b66 100%);
   color: #f4f7fb;
   padding: 28px 18px;
