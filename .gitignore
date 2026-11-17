@@ -1,0 +1,14 @@
+node_modules
+dist
+.DS_Store
+*.local
+.env
+.env.*
+!.env.example
+!backend/.env.example
+.tools
+*.rar
+backend/data/*.sqlite*
+*.tsbuildinfo
+# Utilidades locales y datos internos (p. ej. snapshots del ERP): nunca se versionan
+backend/scripts/
