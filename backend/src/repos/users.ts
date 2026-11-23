@@ -34,6 +34,20 @@ export function costCentersOf(userId: string): string[] {
   return rows.map((row) => row.cost_center_id);
 }
 
+/** Centros de costo de los KAM activos cuyo gerente es `managerId`. */
+export function costCentersOfManagedKams(managerId: string): string[] {
+  const rows = db
+    .prepare(
+      `SELECT DISTINCT uc.cost_center_id
+         FROM users u
+         JOIN user_roles r ON r.user_id = u.id AND r.role_id = 'kam'
+         JOIN user_cost_centers uc ON uc.user_id = u.id
+        WHERE u.manager_id = ? AND u.status = 'activo'`,
+    )
+    .all(managerId) as { cost_center_id: string }[];
+  return rows.map((row) => row.cost_center_id);
+}
+
 export function toPublic(user: UserRow) {
   const roles = rolesOf(user.id);
   return {

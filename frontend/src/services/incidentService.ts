@@ -43,12 +43,13 @@ function emit(next: Omit<IncidentSnapshot, "revision">) {
   listeners.forEach((listener) => listener());
 }
 
+/**
+ * Segunda capa: el backend ya filtra por alcance. Los tickets sin centro de costo
+ * solo los ve quien tiene alcance total.
+ */
 function inScope(incident: Incident, scope: AccessScope): boolean {
-  if (incident.dataSource === "glpi" || incident.costCenterAssignmentStatus === "pending_link") {
-    return true;
-  }
   if (scope.seesAllIncidents) return true;
-  return scope.costCenterIds.includes(incident.costCenterId);
+  return Boolean(incident.costCenterId) && scope.costCenterIds.includes(incident.costCenterId);
 }
 
 function matchesFilters(incident: Incident, filters: IncidentFilters, scope: AccessScope): boolean {

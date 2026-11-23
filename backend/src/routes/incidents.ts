@@ -4,6 +4,8 @@ import { fetchTicketCostCodes } from "../glpi/costCentersDb.ts";
 import { mapGlpiTicket } from "../glpi/mapper.ts";
 import { listCostCenters } from "../repos/costCenters.ts";
 import { requireAuth, requirePermission } from "../middleware/auth.ts";
+import { costCentersOf, costCentersOfManagedKams } from "../repos/users.ts";
+import { resolveTicketScope, ticketInScope } from "../ticketScope.ts";
 
 export const incidentsRouter = Router();
 
@@ -42,11 +44,23 @@ incidentsRouter.get("/api/incidents", requireAuth, requirePermission("incidents.
       console.error("[incidents] No se pudo leer el centro de costo por ticket:", (error as Error).message);
     }
 
+    // Alcance por usuario (KAM, gerente, técnico con CC): se filtra aquí, no en el navegador.
+    // Si la lectura del CC falló, ningún ticket queda relacionado y el alcance restringido ve 0.
+    const user = res.locals.user as { id: string };
+    const scope = resolveTicketScope({
+      roles: (res.locals.roles as string[]) ?? [],
+      directCostCenterIds: costCentersOf(user.id),
+      managedKamCostCenterIds: costCentersOfManagedKams(user.id),
+    });
+    const visible = incidents.filter((inc) => ticketInScope(scope, inc.costCenterId));
+
     res.json({
       source: "glpi",
-      note: `Centro de costo tomado del bloque de datos del solicitante (tickets del bot): ${linked} de ${incidents.length} relacionados.`,
-      count: incidents.length,
-      incidents,
+      note: scope.all
+        ? `Centro de costo tomado del bloque de datos del solicitante (tickets del bot): ${linked} de ${incidents.length} relacionados.`
+        : `Se muestran solo las incidencias de sus centros de costo asignados (${visible.length}).`,
+      count: visible.length,
+      incidents: visible,
     });
   } catch (error) {
     if (error instanceof GlpiConfigError) {
